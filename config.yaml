@@ -1,0 +1,33 @@
+# WebDAV备份配置文件
+webdav:
+  # WebDAV服务器地址，必须以/结尾
+  url: "http://192.168.1.100:8080/"
+  username: "your_username"
+  password: "your_password"
+  timeout: 30  # 连接超时时间（秒）
+
+backup:
+  # 需要备份的文件或目录列表
+  sources:
+    - "/etc/nginx/nginx.conf"
+    - "/var/www/html"
+    - "/home/user/important_docs"
+    - "/opt/app/config"
+  
+  # 备份目标目录（WebDAV上的路径）
+  target_dir: "/backups/server01/"
+  
+  # 保留的备份版本数量
+  keep_versions: 6
+  
+  # 备份文件/目录名后缀格式
+  timestamp_format: "%Y%m%d_%H%M%S"
+  
+  # 临时本地备份目录
+  temp_dir: "/tmp/webdav_backup"
+  
+  # 压缩格式：zip 或 tar.gz
+  compression: "tar.gz"
+  
+  # 是否包含隐藏文件
+  include_hidden: false
