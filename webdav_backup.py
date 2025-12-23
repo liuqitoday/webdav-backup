@@ -246,8 +246,17 @@ class WebDAVClient:
 
 
 class WebDAVBackup:
-    def __init__(self, config_path: str = "config.yaml"):
-        """初始化备份工具"""
+    def __init__(self, config_path: str = None):
+        """初始化备份工具
+        
+        Args:
+            config_path: 配置文件路径，如果为None，则在脚本同目录查找
+        """
+        if config_path is None:
+            # 默认在脚本同目录查找config.yaml
+            script_dir = Path(__file__).parent
+            config_path = str(script_dir / "config.yaml")
+        
         self.config_path = config_path
         self.config = self.load_config()
         
@@ -275,6 +284,14 @@ class WebDAVBackup:
     def load_config(self) -> Dict[str, Any]:
         """加载配置文件"""
         try:
+            logger.info(f"加载配置文件: {self.config_path}")
+            
+            if not os.path.exists(self.config_path):
+                logger.error(f"配置文件不存在: {self.config_path}")
+                logger.error(f"当前工作目录: {os.getcwd()}")
+                logger.error(f"请确保配置文件存在或使用 --config 参数指定配置文件路径")
+                sys.exit(1)
+            
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 config = yaml.safe_load(f)
             
@@ -284,6 +301,7 @@ class WebDAVBackup:
                 if key not in config:
                     raise ValueError(f"缺少必要的配置项: {key}")
             
+            logger.info("配置文件加载成功")
             return config
         except FileNotFoundError:
             logger.error(f"配置文件不存在: {self.config_path}")
@@ -414,7 +432,7 @@ class WebDAVBackup:
         
         return None
     
-    def group_backups_by_source(self, files: List[str]) -> Dict[str, List[Tuple[str, str, str]]]:
+    def group_backups_by_source(self, files: List[str]) -> Dict[str, List[Tuple[str, str, datetime.datetime]]]:
         """按源文件/目录分组备份文件
         
         返回: {source_name: [(timestamp, filename, datetime_obj), ...]}
@@ -643,9 +661,19 @@ class WebDAVBackup:
             sys.exit(0)
 
 
-def test_webdav_connection(config_path: str = "config.yaml"):
+def test_webdav_connection(config_path: str = None):
     """测试WebDAV连接"""
     try:
+        if config_path is None:
+            # 默认在脚本同目录查找config.yaml
+            script_dir = Path(__file__).parent
+            config_path = str(script_dir / "config.yaml")
+        
+        if not os.path.exists(config_path):
+            print(f"配置文件不存在: {config_path}")
+            print(f"请确保配置文件存在或使用 --config 参数指定配置文件路径")
+            return False
+        
         with open(config_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
         
@@ -724,7 +752,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description='WebDAV备份工具')
-    parser.add_argument('--config', '-c', default='config.yaml', help='配置文件路径')
+    parser.add_argument('--config', '-c', default=None, help='配置文件路径')
     parser.add_argument('--test', '-t', action='store_true', help='测试WebDAV连接')
     parser.add_argument('--debug', '-d', action='store_true', help='调试模式，更详细的日志')
     
